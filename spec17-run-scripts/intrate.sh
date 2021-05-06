@@ -2,14 +2,12 @@
 
 #defaults TODO: Make = number of harts?
 copies=1
-counters=0
 
 function usage
 {
-    echo "usage: intrate.sh <benchmark-name> [-H | -h | --help] [--copies <int>] [--workload <int>] [--counters]"
+    echo "usage: intrate.sh <benchmark-name> [-H | -h | --help] [--copies <int>] [--workload <int>]"
     echo "   benchmark-name: the spec17 run directory with binary and inputs"
     echo "   copies: number of rate instances to run (2GiB each) Default: ${copies}"
-    echo "   counters: if set, runs an hpm_counters instance on each hart"
 }
 
 if [ $# -eq 0 -o "$1" == "--help" -o "$1" == "-h" -o "$1" == "-H" ]; then
@@ -26,9 +24,6 @@ do
         --copies)
             shift;
             copies=$1
-            ;;
-        --counters)
-            counters=1;
             ;;
         -h | -H | --help)
             usage
@@ -57,11 +52,6 @@ for i in `seq 0 $[ ${copies} - 1 ]`; do
     cp -al $work_dir/$bmark_name ${work_dir}/copy-$i
 done
 
-# In some systems we might not support for our counter program; so optionally disable it 
-if [ -z "$DISABLE_COUNTERS" -a "$counters" -ne 0 ]; then
-    start_counters
-fi
-
 for i in `seq 0 $[ ${copies} - 1 ]`; do
     cd $work_dir/copy-$i
     echo "name,RealTime,UserTime,KernelTime,copy" >> ~/output/${bmark_name}_${i}.csv
@@ -70,7 +60,3 @@ for i in `seq 0 $[ ${copies} - 1 ]`; do
 done
 sleep 10
 while pgrep -f run.sh > /dev/null; do sleep 10; done
-
-if [ -z "$DISABLE_COUNTERS" -a "$counters" -ne 0 ]; then
-    stop_counters
-fi

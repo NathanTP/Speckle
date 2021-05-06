@@ -2,7 +2,6 @@
 
 # Defaults
 num_threads=1
-counters=0
 
 function usage
 {
@@ -10,7 +9,6 @@ function usage
     echo "   benchmark-name: the spec17 run directory with binary and inputs"
     echo "   threads: number of OpenMP threads to use. Default: ${num_threads}"
     echo "   workload: which workload number to run. Leaving this unset runs all."
-    echo "   counters: if set, runs an hpm_counters instance on each hart"
 }
 
 if [ $# -eq 0 -o "$1" == "--help" -o "$1" == "-h" -o "$1" == "-H" ]; then
@@ -31,9 +29,6 @@ do
         --threads)
             shift;
             num_threads=$1
-            ;;
-        --counters)
-            counters=1;
             ;;
         -h | -H | -help)
             usage
@@ -63,11 +58,6 @@ else
     echo "Starting speed $bmark_name (workload ${workload_num}) run with $OMP_NUM_THREADS threads"
 fi
 
-# In some systems we might not support for our counter program; so optionally disable it 
-if [ -z "$DISABLE_COUNTERS" -a "$counters" -ne 0 ]; then
-    start_counters
-fi
-
 # Actually start the workload
 cd $work_dir/${bmark_name}
 
@@ -82,7 +72,3 @@ fi
 echo "name,RealTime,UserTime,KernelTime" >> ~/output/${full_name}.csv
 /usr/bin/time -a -o ~/output/${full_name}.csv -f "${full_name},%e,%U,%S" \
     ./${runscript} > ~/output/${full_name}.out 1> ~/output/${full_name}.err
-
-if [ -z "$DISABLE_COUNTERS" -a "$counters" -ne 0 ]; then
-    stop_counters
-fi
